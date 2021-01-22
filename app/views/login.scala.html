@@ -1,0 +1,20 @@
+@import com.mohiva.play.silhouette.impl.providers.oauth2.GoogleProvider
+@(provider: GoogleProvider)(implicit flash: Flash)
+
+@main("Login with Google") {
+@_header()
+<section class="section">
+    <div class="container">
+        <a href="@controllers.routes.AuthController.authenticateGoogle()"
+           class="provider @provider.id"
+           title="Login with Google">
+            <img src="@routes.Assets.versioned("/images/btn_google_signin_dark_normal_web.png")" alt="Login with Google">
+        </a>
+        @flash.get("not_authenticated").map { content =>
+        <div class="notification is-danger">
+            <button class="delete"></button> @content
+        </div>
+        }
+    </div>
+</section>
+}

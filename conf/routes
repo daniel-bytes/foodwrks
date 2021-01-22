@@ -1,0 +1,25 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# https://www.playframework.com/documentation/latest/ScalaRouting
+# ~~~~
+
+GET     /                               controllers.HomeController.index
+GET     /login                          controllers.AuthController.login
+GET     /logout                         controllers.AuthController.logout
+GET     /authenticate/google            controllers.AuthController.authenticateGoogle
+GET     /places/nearby                  controllers.PlacesController.nearby
+GET     /places/saved                   controllers.PlacesController.saved
+GET     /places/visited                 controllers.PlacesController.visited
+GET     /places/search                  controllers.PlacesController.search
+GET     /places/:placeId                controllers.PlacesController.get(placeId: domain.models.PlaceId)
+
++ nocsrf
+DELETE  /places/:placeId                controllers.PlacesController.delete(placeId: domain.models.PlaceId)
+POST    /places/:placeId                controllers.PlacesController.save(placeId: domain.models.PlaceId)
+
++ nocsrf
+DELETE  /places/:placeId/comments/:commentId  controllers.CommentsController.delete(placeId: domain.models.PlaceId, commentId: domain.models.CommentId)
+POST    /places/:placeId/comments             controllers.CommentsController.create(placeId: domain.models.PlaceId)
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

@@ -1,0 +1,54 @@
+@(maybeNav: Option[HeaderNav] = None)
+
+@headerNavActiveClass(nav: String) = @{
+    maybeNav match {
+        case Some(HeaderNav.NearbyPlaces) if nav == "nearby" => "is-active"
+        case Some(HeaderNav.SavedPlaces) | Some(HeaderNav.SavedPlace(_)) if nav == "saved" => "is-active"
+        case Some(HeaderNav.VisitedPlaces) | Some(HeaderNav.VisitedPlace(_)) if nav == "visited" => "is-active"
+        case _ => ""
+    }
+}
+
+<nav class="navbar is-fixed-top is-dark" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+        <a class="navbar-item" href="https://foodwrks.io">
+            <img src="@routes.Assets.versioned("/images/logo_small.png")" alt="foodwrks" width="50" height="28">
+        </a>
+
+        @if(maybeNav.nonEmpty) {
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-items">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        }
+    </div>
+
+    @if(maybeNav.nonEmpty) {
+    <div id="navbar-items" class="navbar-menu">
+        <div class="navbar-start">
+            <a class="navbar-item @headerNavActiveClass("nearby")" href="/places/nearby">
+                What's Nearby?
+            </a>
+
+            <a class="navbar-item @headerNavActiveClass("saved")" href="/places/saved">
+                Saved Places
+            </a>
+
+            <a class="navbar-item @headerNavActiveClass("visited")" href="/places/visited">
+                Visited Places
+            </a>
+        </div>
+
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <div class="buttons">
+                    <a class="button" href="/logout">
+                        <strong>Log Out</strong>
+                    </a>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+</nav>

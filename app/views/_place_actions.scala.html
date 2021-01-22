@@ -1,0 +1,68 @@
+@import helper._
+@(
+    model: PlaceViewLike
+)(
+    implicit request: RequestHeader,
+    messagesProvider: MessagesProvider
+)
+
+<div class="field has-addons">
+    @if(!model.editing && (model.saved || model.visited)) {
+    <p class="control">
+        <a class="button is-small"
+           title="Comments"
+           href="/places/@model.id">
+            <span class="icon is-small">
+                <ion-icon name="chatbox-outline"></ion-icon>
+            </span>
+            <span>Comments (@model.commentCount)</span>
+        </a>
+    </p>
+    }
+    @if(!model.saved) {
+    <p class="control">
+        <button class="button is-small"
+                title="Save"
+                data-action="save-place"
+                data-placeid="@model.id"
+                data-externalid="@model.externalId"
+                data-visitstatus="saved">
+            <span class="icon is-small">
+                <ion-icon name="add-outline" title="Save"></ion-icon>
+            </span>
+            <span>Move to Saved</span>
+        </button>
+    </p>
+    }
+    @if(!model.visited) {
+    <p class="control">
+        <button class="button is-small"
+                title="Visited"
+                type="button"
+                data-action="save-place"
+                data-placeid="@model.id"
+                data-externalid="@model.externalId"
+                data-visitstatus="visited">
+            <span class="icon is-small">
+                <ion-icon name="restaurant" title="Visited"></ion-icon>
+            </span>
+            <span>Move to Visited</span>
+        </button>
+    </p>
+    }
+    <p class="control">
+        <button class="button is-small"
+                title="Hide"
+                type="button"
+                data-action="save-place"
+                data-placeid="@model.id"
+                data-externalid="@model.externalId"
+                data-visitstatus="hidden"
+                data-confirm="Are you sure you want to hide this place?">
+            <span class="icon is-small">
+                <ion-icon name="close-outline" title="Hide"></ion-icon>
+            </span>
+            <span>Hide</span>
+        </button>
+    </p>
+</div>

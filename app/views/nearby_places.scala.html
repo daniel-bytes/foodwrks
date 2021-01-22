@@ -1,0 +1,64 @@
+@import helper._
+@(
+    site: Site[PlacesView]
+)(
+    implicit request: RequestHeader,
+    messagesProvider: MessagesProvider
+)
+
+@selectedIfBetween(min: Int, max: Int) = @{
+    if (site.preferences.radius >= min && site.preferences.radius <= max) {
+        "selected"
+    } else {
+        ""
+    }
+}
+
+@main("What's Nearby?") {
+@_header(Some(site.headerNav))
+<section data-require-location="true" class="section">
+    <div class="container">
+        <nav class="level">
+            <div class="level-left">
+                <div class="level-item">
+                    <h2 class="title">What's Nearby?</h2>
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="level-item">
+                    <div class="field has-addons">
+                        <p class="control">
+                            <div class="select">
+                                <select id="search-radius">
+                                    <option value="100" @selectedIfBetween(0, 100)>100 feet</option>
+                                    <option value="500" @selectedIfBetween(101, 500)>500 feet</option>
+                                    <option value="1000" @selectedIfBetween(501, 1000)>1000 feet</option>
+                                    <option value="5280" @selectedIfBetween(1001, 5280)>1 mile</option>
+                                </select>
+                            </div>
+                        </p>
+                        <p class="control">
+                            <button id="search-nearby" class="button">
+                                Search Nearby
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        @if(site.model.places.isEmpty) {
+        <section class="section">
+            <div class="container">
+                <h2 class="subtitle">
+                    No nearby places were found.  Try increasing your search distance.
+                </h2>
+            </div>
+        </section>
+        }
+
+        @_places_list(site.model)
+    </div>
+</section>
+}
+

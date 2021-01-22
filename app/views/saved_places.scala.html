@@ -1,0 +1,33 @@
+@(
+  site: Site[PlacesView],
+  visited: Boolean
+)(
+  implicit request: RequestHeader,
+  messagesProvider: MessagesProvider
+)
+
+@title = @{
+  if (visited) "My Visited Places" else "My Saved Places"
+}
+
+@main(title) {
+@_header(Some(site.headerNav))
+<section class="section">
+  <div class="container">
+    <h1 class="title">
+      @title
+    </h1>
+    @if(site.model.places.isEmpty) {
+    <section class="section">
+      <div class="container">
+        <h2 class="subtitle">
+          Looks like you don't have any @if(visited) { visited } else { saved } places
+        </h2>
+      </div>
+    </section>
+    }
+
+    @_places_list(site.model)
+  </div>
+</section>
+}

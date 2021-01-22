@@ -1,0 +1,49 @@
+@import helper._
+@(
+    site: Site[PlaceDetailsView],
+    commentForm: Form[CommentForms.CommentCreate]
+)(
+    implicit request: RequestHeader,
+    messagesProvider: MessagesProvider
+)
+
+@main("Place") {
+    @_header(Some(site.headerNav))
+    @defining(site.model) { place =>
+    <section class="section">
+        <div class="container">
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <h1 class="title">@place.name</h1>
+                    </div>
+                </div>
+                <div class="level-right">
+                    @_place_actions(place)
+                </div>
+            </nav>
+
+            <article class="media">
+                <figure class="media-left">
+                    <p class="image is-64x64">
+                        <img src="@place.icon">
+                    </p>
+                </figure>
+                <div class="media-content">
+                    @_comments_list(site.model.comments, site.model.users)
+                    <article class="media">
+                        <figure class="media-left">
+                            <p class="image is-64x64">
+                                <img src="https://bulma.io/images/placeholders/128x128.png">
+                            </p>
+                        </figure>
+                        <div class="media-content">
+                            @_comment_editor(place.id, commentForm)
+                        </div>
+                    </article>
+                </div>
+            </article>
+        </div>
+    </section>
+    }
+}

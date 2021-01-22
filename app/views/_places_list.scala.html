@@ -1,0 +1,41 @@
+@import helper._
+@(
+    model: PlacesView
+)(
+    implicit request: RequestHeader,
+    messagesProvider: MessagesProvider
+)
+
+@for(place <- model.places) {
+<article class="media">
+    <figure class="media-left">
+        <p class="image is-32x32">
+            <img src="@place.icon">
+        </p>
+    </figure>
+    <div class="media-content">
+        <div class="content">
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p>
+                            <strong>@place.name</strong>
+                        </p>
+                    </div>
+                    <div class="level-item">
+                        <p>
+                            <small> (@place.operationalStatus) </small>
+                        </p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <div class="level-item">
+                        @_place_actions(place)
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <span>@place.address</span>
+    </div>
+</article>
+}

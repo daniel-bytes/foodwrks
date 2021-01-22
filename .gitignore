@@ -1,0 +1,15 @@
+dist/*
+logs/
+target/
+project/project/
+project/target/
+.bsp
+.idea
+.idea_modules
+.classpath
+.project
+.settings
+.g8
+.env
+RUNNING_PID
+.DS_Store

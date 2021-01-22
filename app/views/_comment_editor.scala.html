@@ -1,0 +1,30 @@
+@import helper._
+@(
+    placeId: String,
+    commentForm: Form[CommentForms.CommentCreate]
+)(
+    implicit request: RequestHeader,
+    messagesProvider: MessagesProvider
+)
+
+<form action="/places/@placeId/comments" id="comment-form" method="post">
+    @CSRF.formField
+    <div class="field">
+        <p class="control">
+            @textarea(
+                commentForm("comment"),
+                Symbol("label") -> "Comment",
+                Symbol("id") -> "comment",
+                Symbol("class") -> "textarea",
+                Symbol("placeholder") -> "Add a comment...",
+                Symbol("data-action") -> "edit-comment"
+            )
+        </p>
+    </div>
+    <button id="save-comment"
+            class="button is-primary"
+            disabled
+            type="submit"
+            form="comment-form"
+            data-action="save-comment">Post comment</button>
+</form>
