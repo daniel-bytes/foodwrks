@@ -6,18 +6,22 @@ import play.api.Logger
 import javax.inject._
 import play.api.mvc._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 /**
  * This controller creates an `Action` to handle HTTP requests to the
  * application's home page.
  */
 @Singleton
 class HomeController @Inject()(
-  val controllerComponents: ControllerComponents,
+  controllerComponents: MessagesControllerComponents,
   silhouette: Silhouette[Auth.SessionEnv]
-) extends BaseController {
+)(implicit ec: ExecutionContext) extends MessagesAbstractController(controllerComponents) {
   implicit val logger: Logger = Logger(getClass)
 
-  def index() = silhouette.SecuredAction { implicit request =>
-    request.identity.user.redirectFromPreferences
+  def index() = Action.async { implicit request: MessagesRequest[AnyContent] =>
+    silhouette.secureMessagesRequest { user =>
+      Future.successful(user.redirectFromPreferences)
+    }
   }
 }
