@@ -21,7 +21,7 @@ class HomeController @Inject()(
 
   def index() = Action.async { implicit request: MessagesRequest[AnyContent] =>
     silhouette.secureMessagesRequest { user =>
-      Future.successful(user.redirectFromPreferences)
+      Future.successful(user.redirectFromPreferences())
     }
   }
 }

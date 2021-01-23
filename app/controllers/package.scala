@@ -82,12 +82,14 @@ package object controllers {
   }
 
   implicit class UserSyntax(val user: User) extends AnyVal {
-    def redirectFromPreferences: Result = UserPreferencesView(user.preferences).lastPlace match {
+    def redirectFromPreferences(listOnly: Boolean = false): Result = UserPreferencesView(user.preferences).lastPlace match {
       case HeaderNav.NearbyPlaces => Redirect(routes.PlacesController.nearby())
       case HeaderNav.PlacesSearch => Redirect(routes.PlacesController.search())
       case HeaderNav.SavedPlaces => Redirect(routes.PlacesController.saved())
       case HeaderNav.VisitedPlaces => Redirect(routes.PlacesController.visited())
+      case HeaderNav.SavedPlace(id) if listOnly => Redirect(routes.PlacesController.saved())
       case HeaderNav.SavedPlace(id) => Redirect(routes.PlacesController.get(id))
+      case HeaderNav.VisitedPlace(id) if listOnly => Redirect(routes.PlacesController.visited())
       case HeaderNav.VisitedPlace(id) => Redirect(routes.PlacesController.get(id))
     }
   }

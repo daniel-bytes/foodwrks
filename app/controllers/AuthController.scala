@@ -60,7 +60,7 @@ class AuthController @Inject()(
 
         result <- authenticatorService.embed(
           value,
-          user.redirectFromPreferences
+          user.redirectFromPreferences()
         )
       } yield result
     }

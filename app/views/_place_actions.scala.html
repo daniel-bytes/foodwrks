@@ -7,7 +7,7 @@
 )
 
 <div class="field has-addons">
-    @if(!model.editing && (model.saved || model.visited)) {
+    @if(!model.editing && (model.saved || model.visited || model.hidden)) {
     <p class="control">
         <a class="button is-small"
            title="Comments"

@@ -193,7 +193,7 @@ class PlacesController @Inject()(
             savedPlace <- placesService.savePlace(placeToSave).toMvcResultEitherT
 
             result = data.visitStatus match {
-              case VisitStatus.Hidden => user.redirectFromPreferences
+              case VisitStatus.Hidden => user.redirectFromPreferences(listOnly = true)
               case _ => Redirect(routes.PlacesController.get(savedPlace.id))
             }
 
@@ -216,7 +216,7 @@ class PlacesController @Inject()(
         .toMvcResult(_ => lastPlace match {
           case HeaderNav.SavedPlace(_) => Redirect(routes.PlacesController.saved())
           case HeaderNav.VisitedPlace(_) => Redirect(routes.PlacesController.visited())
-          case _ => user.redirectFromPreferences
+          case _ => user.redirectFromPreferences(listOnly = true)
         })
     }
   }
