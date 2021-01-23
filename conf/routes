@@ -10,6 +10,7 @@ GET     /authenticate/google            controllers.AuthController.authenticateG
 GET     /places/nearby                  controllers.PlacesController.nearby
 GET     /places/saved                   controllers.PlacesController.saved
 GET     /places/visited                 controllers.PlacesController.visited
+GET     /places/hidden                  controllers.PlacesController.hidden
 GET     /places/search                  controllers.PlacesController.search
 GET     /places/:placeId                controllers.PlacesController.get(placeId: domain.models.PlaceId)
 

@@ -59,7 +59,7 @@ class PlacesController @Inject()(
 
         model = Site(prefs, view)
 
-        result = Ok(views.html.saved_places(model, visited = false))
+        result = Ok(views.html.saved_places(model, visitStatus = VisitStatus.Saved))
       } yield result).value.fold
     }
   }
@@ -79,7 +79,23 @@ class PlacesController @Inject()(
 
         model = Site(prefs, view)
 
-        result = Ok(views.html.saved_places(model, visited = true))
+        result = Ok(views.html.saved_places(model, visitStatus = VisitStatus.Visited))
+      } yield result).value.fold
+    }
+  }
+
+  /**
+   * GET /places/hidden
+   */
+  def hidden() = Action.async { implicit request: MessagesRequest[AnyContent] =>
+    silhouette.secureMessagesRequest { user =>
+      logger.info(s"[${user.id}] GET /places/hidden")
+      (for {
+        places <- placesService.listPlacesForUser(user.id, Some(VisitStatus.Hidden)).toMvcResultEitherT
+
+        model = Site(UserPreferencesView(user.preferences), mapPlacesView(places))
+
+        result = Ok(views.html.saved_places(model, visitStatus = VisitStatus.Hidden))
       } yield result).value.fold
     }
   }
@@ -216,6 +232,7 @@ class PlacesController @Inject()(
         place.operationalStatus.text,
         saved = place.visitStatus == VisitStatus.Saved,
         visited = place.visitStatus == VisitStatus.Visited,
+        hidden = place.visitStatus == VisitStatus.Hidden,
         commentCount = place.commentCount
       ))
     )
@@ -235,6 +252,7 @@ class PlacesController @Inject()(
         place.operationalStatus.text,
         saved = place.visitStatus == VisitStatus.Saved,
         visited = place.visitStatus == VisitStatus.Visited,
+        hidden = place.visitStatus == VisitStatus.Hidden,
         commentCount = place.commentCount,
         comments = comments.map(CommentView(_)),
         users = users.map(u => u.id.toString -> UserView(u)).toMap

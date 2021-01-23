@@ -1,13 +1,17 @@
 @(
   site: Site[PlacesView],
-  visited: Boolean
+  visitStatus: domain.models.VisitStatus
 )(
   implicit request: RequestHeader,
   messagesProvider: MessagesProvider
 )
 
 @title = @{
-  if (visited) "My Visited Places" else "My Saved Places"
+  visitStatus match {
+    case domain.models.VisitStatus.Saved => "My Saved Places"
+    case domain.models.VisitStatus.Visited => "My Visited Places"
+    case domain.models.VisitStatus.Hidden => "My Hidden Places"
+  }
 }
 
 @main(title) {
@@ -21,7 +25,7 @@
     <section class="section">
       <div class="container">
         <h2 class="subtitle">
-          Looks like you don't have any @if(visited) { visited } else { saved } places
+          Looks like you don't have any @visitStatus.text places
         </h2>
       </div>
     </section>

@@ -15,6 +15,7 @@ trait PlaceViewLike {
   def operationalStatus: String
   def saved: Boolean
   def visited: Boolean
+  def hidden: Boolean
   def editing: Boolean
   def commentCount: Int
 }
@@ -28,6 +29,7 @@ case class PlaceView(
   operationalStatus: String,
   saved: Boolean,
   visited: Boolean,
+  hidden: Boolean,
   commentCount: Int
 ) extends PlaceViewLike {
   def editing: Boolean = false
@@ -46,6 +48,7 @@ case class PlaceDetailsView(
   operationalStatus: String,
   saved: Boolean,
   visited: Boolean,
+  hidden: Boolean,
   commentCount: Int,
   comments: Seq[CommentView],
   users: Map[String, UserView]
