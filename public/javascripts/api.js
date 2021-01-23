@@ -1,7 +1,23 @@
-class Application {
+class Api {
   constructor(redirect, showError) {
     this.redirect = redirect
     this.showError = showError
+  }
+
+  deleteComment(placeId, commentId) {
+    return this.deleteEntity(
+      `/places/${placeId}/comments/${commentId}`
+    )
+  }
+
+  savePlace(placeId, externalId, visitStatus) {
+    const formData = new FormData()
+    formData.set('external_id', externalId)
+    formData.set('visit_status', visitStatus)
+    return this.postEntity(
+       `/places/${placeId}`,
+       formData
+     )
   }
 
   async deleteEntity(url) {
@@ -16,15 +32,14 @@ class Application {
     await this.handleResponse(response)
   }
 
-  async postEntity(url, data) {
+  async postEntity(url, formData) {
     const response = await fetch(url, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
         'X-Requested-With': 'fetch'
       },
-      body: data
+      body: formData
     })
 
     await this.handleResponse(response)
