@@ -14,20 +14,21 @@ trait PlacesService extends Service {
     userId: UserId,
     location: GeoLocation,
     radius: Int,
-    placeType: PlaceType
-  ): AsyncResult[Seq[Place]]
+    placeType: PlaceType,
+    pageCursor: Option[PageCursor]
+  ): AsyncResult[CursorPagedSeq[Place]]
 
   def searchPlaces(
     userId: UserId,
     location: GeoLocation,
     radius: Int,
     query: String
-  ): AsyncResult[Seq[Place]]
+  ): AsyncResult[CursorPagedSeq[Place]]
 
   def listPlacesForUser(
     userId: UserId,
     visitStatus: Option[VisitStatus] = None
-  ): AsyncResult[Seq[Place]]
+  ): AsyncResult[CursorPagedSeq[Place]]
 
   def getPlace(
     placeId: PlaceId
@@ -56,16 +57,15 @@ object PlacesService {
       userId: UserId,
       location: GeoLocation,
       radius: Int,
-      placeType: PlaceType
-    ): AsyncResult[Seq[Place]] = {
+      placeType: PlaceType,
+      pageCursor: Option[PageCursor]
+    ): AsyncResult[CursorPagedSeq[Place]] = {
       (for {
-        nearby <- searchRepository.searchNearbyPlaces(location, radius, placeType).toEitherT
+        nearby <- searchRepository.searchNearbyPlaces(location, radius, placeType, pageCursor).toEitherT
 
         saved <- placesRepository.listPlacesForUser(userId).toEitherT
 
-        externalIds = saved.map(_.externalId).toSet
-
-        results = nearby.filterNot(place => externalIds.contains(place.externalId))
+        results = join(nearby, saved)
       } yield results).value
     }
 
@@ -74,14 +74,20 @@ object PlacesService {
       location: GeoLocation,
       radius: Int,
       query: String
-    ): AsyncResult[Seq[Place]] = {
-      searchRepository.searchPlaces(location, radius, query)
+    ): AsyncResult[CursorPagedSeq[Place]] = {
+      (for {
+        nearby <- searchRepository.searchPlaces(location, radius, query).toEitherT
+
+        saved <- placesRepository.listPlacesForUser(userId).toEitherT
+
+        results = join(nearby, saved)
+      } yield results).value
     }
 
     def listPlacesForUser(
       userId: UserId,
       visitStatus: Option[VisitStatus] = None
-    ): AsyncResult[Seq[Place]] = {
+    ): AsyncResult[CursorPagedSeq[Place]] = {
       placesRepository.listPlacesForUser(userId, visitStatus)
     }
 
@@ -128,6 +134,21 @@ object PlacesService {
     ): AsyncResult[Unit] = {
       placesRepository.deletePlace(placeId)
     }
+  }
+
+  def join(
+    externalPlaces: CursorPagedSeq[Place],
+    savedPlaces: CursorPagedSeq[Place]
+  ): CursorPagedSeq[Place] = {
+    val data = externalPlaces.data.map { externalPlace =>
+      savedPlaces
+        .data
+        .find(_.externalId == externalPlace.externalId)
+        .map(merge(_, externalPlace))
+        .getOrElse(externalPlace)
+    }.filter(_.visitStatus != VisitStatus.Hidden)
+
+    CursorPagedSeq(data, externalPlaces.cursor)
   }
 
   def merge(

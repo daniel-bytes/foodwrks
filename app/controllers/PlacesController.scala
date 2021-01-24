@@ -111,6 +111,7 @@ class PlacesController @Inject()(
       val searchLocation = request.getQueryString("location").flatMap(GeoLocation.parse).getOrElse(userPrefsView.location)
       val searchRadius = request.getQueryString("radius").flatMap(_.toIntOption).getOrElse(userPrefsView.radius)
       val placeType = request.getQueryString("place_type").flatMap(PlaceTypes.byId).getOrElse(userPrefsView.placeType)
+      val pageCursor = request.getQueryString("page_cursor").map(PageCursor)
 
       val headerNav = HeaderNav.NearbyPlaces
       val updatedPrefs = userPrefsView
@@ -132,7 +133,8 @@ class PlacesController @Inject()(
           user.id,
           searchLocation,
           searchRadius,
-          placeType
+          placeType,
+          pageCursor
         ).toMvcResultEitherT
 
         view = mapPlacesView(places)
@@ -165,7 +167,8 @@ class PlacesController @Inject()(
           Future.successful(
             Ok(
               views.html.search_places(
-                Site(userPrefsView, PlacesView(Seq.empty))
+                Site(userPrefsView, PlacesView(Seq.empty, pageCursor = None)),
+                maybeQuery
               )
             )
           )
@@ -204,7 +207,7 @@ class PlacesController @Inject()(
 
             model = Site(updatedPrefs, view)
 
-            result = Ok(views.html.search_places(model))
+            result = Ok(views.html.search_places(model, maybeQuery))
           } yield result).value.fold
       }
     }
@@ -277,9 +280,9 @@ class PlacesController @Inject()(
     }
   }
 
-  def mapPlacesView(places: Seq[Place]): PlacesView = {
+  def mapPlacesView(places: CursorPagedSeq[Place]): PlacesView = {
     PlacesView(
-      places = places.map(place => PlaceView(
+      places = places.data.map(place => PlaceView(
         place.id.toString,
         place.externalId.toString,
         place.name,
@@ -290,7 +293,8 @@ class PlacesController @Inject()(
         visited = place.visitStatus == VisitStatus.Visited,
         hidden = place.visitStatus == VisitStatus.Hidden,
         commentCount = place.commentCount
-      ))
+      )),
+      pageCursor = places.cursor.map(_.value)
     )
   }
 

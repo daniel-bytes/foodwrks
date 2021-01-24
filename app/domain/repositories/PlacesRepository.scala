@@ -13,7 +13,7 @@ trait PlacesRepository extends Repository {
   def listPlacesForUser(
     userId: UserId,
     visitStatus: Option[VisitStatus] = None
-  ): AsyncResult[Seq[Place]]
+  ): AsyncResult[CursorPagedSeq[Place]]
 
   def getPlace(
     placeId: PlaceId
@@ -37,10 +37,12 @@ object PlacesRepository {
     def listPlacesForUser(
       userId: UserId,
       visitStatus: Option[VisitStatus] = None
-    ): AsyncResult[Seq[Place]] = {
+    ): AsyncResult[CursorPagedSeq[Place]] = {
       Future {
         db.withConnection { conn =>
-          Right(listPlacesByUserIdQuery(conn, userId, visitStatus))
+          Right(
+            CursorPagedSeq(listPlacesByUserIdQuery(conn, userId, visitStatus), cursor = None)
+          )
         }
       }(databaseExecutionContext)
     }

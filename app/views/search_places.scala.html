@@ -1,7 +1,8 @@
 @import helper._
 @import domain.models.PlaceType
 @(
-    site: Site[PlacesView]
+    site: Site[PlacesView],
+    query: Option[String]
 )(
     implicit request: RequestHeader,
     messagesProvider: MessagesProvider
@@ -31,10 +32,10 @@
                             </div>
                         </p>
                         <p class="control">
-                            <input type="text" id="query" class="input">
+                            <input type="text" id="query" class="input" value="@query">
                         </p>
                         <p class="control">
-                            <button id="search-text" class="button" disabled>
+                            <button id="search-text" class="button">
                                 Search
                             </button>
                         </p>

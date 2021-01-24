@@ -37,7 +37,8 @@ case class PlaceView(
 }
 
 case class PlacesView(
-  places: Seq[PlaceView]
+  places: Seq[PlaceView],
+  pageCursor: Option[String]
 )
 
 case class PlaceDetailsView(

@@ -4,13 +4,16 @@ class Search {
     this.geolocation = geolocation
   }
 
-  searchNearby(beginLoading, doneLoading) {
+  searchNearby(beginLoading, doneLoading, pageCursor) {
     this.doSearch(
       position => {
         const location = `${position.coords.latitude},${position.coords.longitude}`
         const searchRadius = this.document.getElementById('search-radius').value
         const placeType = this.document.getElementById('place-type').value
-        this.document.location.href = `/places/nearby?location=${location}&radius=${searchRadius}&place_type=${placeType}`
+        const url = `/places/nearby?location=${location}&radius=${searchRadius}&place_type=${placeType}` +
+          (pageCursor ? `&page_cursor=${pageCursor}` : '')
+
+        this.document.location.href = url
       },
       beginLoading,
       doneLoading

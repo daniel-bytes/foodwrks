@@ -23,14 +23,15 @@ trait PlacesSearchRepository extends Repository {
   def searchNearbyPlaces(
     location: GeoLocation,
     radius: Int,
-    placeType: PlaceType
-  ): AsyncResult[Seq[Place]]
+    placeType: PlaceType,
+    pageCursor: Option[PageCursor]
+  ): AsyncResult[CursorPagedSeq[Place]]
 
   def searchPlaces(
     location: GeoLocation,
     radius: Int,
     query: String
-  ): AsyncResult[Seq[Place]]
+  ): AsyncResult[CursorPagedSeq[Place]]
 }
 
 object PlacesSearchRepository {
@@ -85,20 +86,34 @@ object PlacesSearchRepository {
     def searchNearbyPlaces(
       location: GeoLocation,
       radius: Int,
-      placeType: PlaceType
-    ): AsyncResult[Seq[Place]] = {
-      ws
-        .url(nearbySearchUrl)
-        .withQueryStringParameters(
-        "location" -> location.toString,
-          "radius" -> toMeters(radius).toString,
-          "type" -> placeType.id,
-          "key" -> config.apiKey
+      placeType: PlaceType,
+      pageCursor: Option[PageCursor]
+    ): AsyncResult[CursorPagedSeq[Place]] = {
+      pageCursor
+        .map(cursor =>
+          ws
+            .url(nearbySearchUrl)
+            .withQueryStringParameters(
+              "key" -> config.apiKey,
+              "pagetoken" -> cursor.value
+            )
+        ).getOrElse(
+          ws
+            .url(nearbySearchUrl)
+            .withQueryStringParameters(
+              "location" -> location.toString,
+              "radius" -> toMeters(radius).toString,
+              "type" -> placeType.id,
+              "key" -> config.apiKey
+            )
         )
         .withRequestTimeout(10000.millis)
         .get()
         .map { r =>
-          logger.info(s"Google API [$nearbySearchUrl?location=$location&radius=${toMeters(radius).toString}&type=$placeType] responded with [${r.status} ${r.statusText}]")
+          val q = pageCursor
+            .map(c => s"pagetoken=${c.value}")
+            .getOrElse(s"location=$location&radius=${toMeters(radius).toString}&type=$placeType")
+          logger.info(s"Google API [$nearbySearchUrl?$q] responded with [${r.status} ${r.statusText}]")
 
           r.json.validate[NearbySearchResults].fold({ err =>
             Left(Error.DeserializationError(
@@ -108,11 +123,12 @@ object PlacesSearchRepository {
             ))
           }, { results =>
             Right(
-              results
-                .results
-                .flatMap(fromResult)
-                .sortBy(_.operationalStatus.sortKey)
-              // TODO: sort by distance
+              CursorPagedSeq(
+                results
+                  .results
+                  .flatMap(fromResult),
+                cursor = results.nextPageToken.map(PageCursor)
+              )
             )
           })
         }
@@ -122,7 +138,7 @@ object PlacesSearchRepository {
       location: GeoLocation,
       radius: Int,
       query: String
-    ): AsyncResult[Seq[Place]] = {
+    ): AsyncResult[CursorPagedSeq[Place]] = {
       val inputType = "textquery"
       val locationBias = s"circle:${toMeters(radius)}@${location.lat},${location.lng}"
       val fields = "place_id,business_status,photos,formatted_address,name,rating,opening_hours,geometry,user_ratings_total,types,reference,icon"
@@ -149,11 +165,12 @@ object PlacesSearchRepository {
           }, { results =>
             logger.info(results.candidates.map(r => (r.placeId, r.name, r.geometry)).toString)
             Right(
-              results
-                .candidates
-                .flatMap(fromResult)
-                .sortBy(_.operationalStatus.sortKey)
-              // TODO: sort by distance
+              CursorPagedSeq(
+                results
+                  .candidates
+                  .flatMap(fromResult),
+                cursor = None
+              )
             )
           })
         }
@@ -218,8 +235,11 @@ object PlacesSearchRepository {
     )
 
     case class Details(result: Result)
-    case class NearbySearchResults(results: Seq[Result])
     case class SearchResults(candidates: Seq[Result])
+    case class NearbySearchResults(
+      results: Seq[Result],
+      nextPageToken: Option[String]
+    )
 
     implicit val config = JsonConfiguration(SnakeCase)
     implicit val locationReads = Json.reads[Location]

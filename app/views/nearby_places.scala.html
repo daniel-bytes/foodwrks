@@ -42,9 +42,16 @@
                         </p>
                         <p class="control">
                             <button id="search-nearby" class="button">
-                                Search Nearby
+                                Search
                             </button>
                         </p>
+                        @site.model.pageCursor.map { cursor =>
+                        <p class="control">
+                            <button id="search-nearby-next-page" class="button" data-pagecursor="@cursor">
+                                Show more results
+                            </button>
+                        </p>
+                        }
                     </div>
                 </div>
             </div>

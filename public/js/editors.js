@@ -42,16 +42,29 @@ class Editors {
     const $document = this.document
     const $search = this.search
 
-    function bind(selector, action, disableFor) {
+    function bind(args) {
+      const { selector, action, disableFor, pageButton } = args
       const $searchButton = $document.querySelector(selector)
+      const $pageButton = pageButton ? $document.querySelector(pageButton) : null
+      const pageCursor = $pageButton ? $pageButton.dataset.pagecursor : null
 
       if ($searchButton) {
-        $searchButton.addEventListener('click', event => {
+        const handler = event => {
           $search[action](
-            () => $searchButton.classList.add('is-loading'),
-            () => $searchButton.classList.remove('is-loading')
+            () => {
+              $searchButton.classList.add('is-loading')
+              if ($pageButton) $pageButton.classList.add('is-loading')
+            },
+            () => {
+              $searchButton.classList.remove('is-loading')
+              if ($pageButton) $pageButton.classList.remove('is-loading')
+            },
+            pageCursor
           )
-        })
+        }
+
+        $searchButton.addEventListener('click', handler)
+        if ($pageButton) $pageButton.addEventListener('click', handler)
 
         if (disableFor) {
           const $editor = $document.querySelector(disableFor)
@@ -60,13 +73,22 @@ class Editors {
             $editor.addEventListener('keyup', () => {
               $searchButton.disabled = !$editor.value.trim()
             })
+            $searchButton.disabled = !$editor.value.trim()
           }
         }
       }
     }
 
-    bind('button#search-nearby', 'searchNearby')
-    bind('button#search-text', 'searchText', 'input#query')
+    bind({
+      selector: 'button#search-nearby',
+      action: 'searchNearby',
+      pageButton: 'button#search-nearby-next-page'
+    })
+    bind({
+      selector: 'button#search-text',
+      action: 'searchText',
+      disableFor: 'input#query'
+    })
   }
 
   bindEditors() {
