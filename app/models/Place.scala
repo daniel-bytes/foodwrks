@@ -1,6 +1,7 @@
 package models
 
 import domain.models.{ExternalPlaceId, PlaceId, VisitStatus}
+import domain.models.{PlaceTypes => DomainPlaceTypes}
 import play.api.data.Form
 import play.api.data.Forms._
 

@@ -13,7 +13,8 @@ trait PlacesService extends Service {
   def searchNearbyPlaces(
     userId: UserId,
     location: GeoLocation,
-    radius: Int
+    radius: Int,
+    placeType: PlaceType
   ): AsyncResult[Seq[Place]]
 
   def listPlacesForUser(
@@ -47,9 +48,9 @@ object PlacesService {
     def searchNearbyPlaces(
       userId: UserId,
       location: GeoLocation,
-      radius: Int
+      radius: Int,
+      placeType: PlaceType
     ): AsyncResult[Seq[Place]] = {
-      val placeType = "restaurant" // TODO: make an enum argument
       (for {
         nearby <- searchRepository.searchNearbyPlaces(location, radius, placeType).toEitherT
 

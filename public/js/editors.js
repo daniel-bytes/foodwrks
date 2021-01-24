@@ -49,14 +49,15 @@ class Editors {
               $searchButton.classList.remove('is-loading')
               const location = `${position.coords.latitude},${position.coords.longitude}`
               const searchRadius = this.document.getElementById('search-radius').value
-              this.document.location.href = `/places/nearby?location=${location}&radius=${searchRadius}`
+              const placeType = this.document.getElementById('place-type').value
+              this.document.location.href = `/places/nearby?location=${location}&radius=${searchRadius}&place_type=${placeType}`
             }, error => {
               $searchButton.classList.remove('is-loading')
               console.error(error)
 
               if (error.code === 1) alert('Failed to get browser location: permission denied')
-              else if (error.code === 1) alert('Failed to get browser location: position unavailable, try again')
-              else if (error.code === 1) alert('Failed to get browser location: timed out, try again')
+              else if (error.code === 2) alert('Failed to get browser location: position unavailable, try again')
+              else if (error.code === 3) alert('Failed to get browser location: timed out, try again')
               else alert(`Failed to get browser location (error code ${error.code})`)
             }
           )

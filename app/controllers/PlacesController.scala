@@ -106,10 +106,11 @@ class PlacesController @Inject()(
   def nearby() = Action.async { implicit request: MessagesRequest[AnyContent] =>
     silhouette.secureMessagesRequest { user =>
       logger.info(s"[${user.id}] GET /places/nearby")
-      val userPrefsView = UserPreferencesView(user.preferences)
 
+      val userPrefsView = UserPreferencesView(user.preferences)
       val searchLocation = request.getQueryString("location").flatMap(GeoLocation.parse).getOrElse(userPrefsView.location)
       val searchRadius = request.getQueryString("radius").flatMap(_.toIntOption).getOrElse(userPrefsView.radius)
+      val placeType = request.getQueryString("place_type").flatMap(PlaceTypes.byId).getOrElse(PlaceTypes.Restaurant)
 
       val headerNav = HeaderNav.NearbyPlaces
       val updatedPrefs = userPrefsView
@@ -119,6 +120,8 @@ class PlacesController @Inject()(
         .setTo(searchRadius)
         .modify(_.lastPlace)
         .setTo(headerNav)
+        .modify(_.placeType)
+        .setTo(placeType)
 
       val updatedUser = user
         .modify(_.preferences)
@@ -128,7 +131,8 @@ class PlacesController @Inject()(
         places <- placesService.searchNearbyPlaces(
           user.id,
           searchLocation,
-          searchRadius
+          searchRadius,
+          placeType
         ).toMvcResultEitherT
 
         view = mapPlacesView(places)
@@ -141,7 +145,9 @@ class PlacesController @Inject()(
 
         model = Site(updatedPrefs, view)
 
-        result = Ok(views.html.nearby_places(model))
+        placeTypes = PlaceTypes.all.values.toList.sortBy(_.text)
+
+        result = Ok(views.html.nearby_places(model, placeTypes))
       } yield result).value.fold
     }
   }

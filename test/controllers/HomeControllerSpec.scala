@@ -1,7 +1,7 @@
 package controllers
 
 import com.mohiva.play.silhouette.api.Silhouette
-import com.mohiva.play.silhouette.impl.providers.oauth2.GoogleProvider
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice._
@@ -16,11 +16,18 @@ import scala.concurrent.ExecutionContext
  *
  * For more information, see https://www.playframework.com/documentation/latest/ScalaTestingWithScalaTest
  */
-class HomeControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting with MockitoSugar {
+class HomeControllerSpec
+  extends PlaySpec
+    with GuiceOneAppPerTest
+    with Injecting
+    with MockitoSugar
+    with ScalaFutures {
+  implicit val ec = ExecutionContext.global
+
   "HomeController GET" should {
 
     "render the index page from a new instance of controller" in {
-      val controller = new HomeController(stubControllerComponents(), mock[Silhouette[Auth.SessionEnv]])
+      val controller = new HomeController(stubMessagesControllerComponents(), mock[Silhouette[Auth.SessionEnv]])
       val home = controller.index().apply(FakeRequest(GET, "/"))
 
       status(home) mustBe OK

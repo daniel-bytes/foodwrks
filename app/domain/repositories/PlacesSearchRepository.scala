@@ -23,7 +23,7 @@ trait PlacesSearchRepository extends Repository {
   def searchNearbyPlaces(
     location: GeoLocation,
     radius: Int,
-    placeType: String
+    placeType: PlaceType
   ): AsyncResult[Seq[Place]]
 }
 
@@ -78,14 +78,14 @@ object PlacesSearchRepository {
     def searchNearbyPlaces(
       location: GeoLocation,
       radius: Int,
-      placeType: String
+      placeType: PlaceType
     ): AsyncResult[Seq[Place]] = {
       ws
         .url(searchUrl)
         .withQueryStringParameters(
         "location" -> location.toString,
           "radius" -> toMeters(radius).toString,
-          "type" -> placeType,
+          "type" -> placeType.id,
           "key" -> config.apiKey
         )
         .withRequestTimeout(10000.millis)

@@ -1,6 +1,8 @@
 @import helper._
+@import domain.models.PlaceType
 @(
-    site: Site[PlacesView]
+    site: Site[PlacesView],
+    placeTypes: List[PlaceType]
 )(
     implicit request: RequestHeader,
     messagesProvider: MessagesProvider
@@ -8,6 +10,14 @@
 
 @selectedIfBetween(min: Int, max: Int) = @{
     if (site.preferences.radius >= min && site.preferences.radius <= max) {
+        "selected"
+    } else {
+        ""
+    }
+}
+
+@selectedIfPlaceType(placeType: PlaceType) = @{
+    if (site.preferences.placeType == placeType) {
         "selected"
     } else {
         ""
@@ -34,6 +44,15 @@
                                     <option value="500" @selectedIfBetween(101, 500)>500 feet</option>
                                     <option value="1000" @selectedIfBetween(501, 1000)>1000 feet</option>
                                     <option value="5280" @selectedIfBetween(1001, 5280)>1 mile</option>
+                                </select>
+                            </div>
+                        </p>
+                        <p class="control">
+                            <div class="select">
+                                <select id="place-type">
+                                    @for(placeType <- placeTypes) {
+                                    <option value="@placeType.id" @selectedIfPlaceType(placeType)>@placeType.text</option>
+                                    }
                                 </select>
                             </div>
                         </p>

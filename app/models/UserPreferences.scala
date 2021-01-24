@@ -7,7 +7,8 @@ case class UserPreferencesView(
   radius: Int,
   hideClosed: Boolean,
   hidePermanentClosed: Boolean,
-  lastPlace: HeaderNav
+  lastPlace: HeaderNav,
+  placeType: PlaceType
 ) {
   def toDomainModel: UserPreferences = {
     import UserPreferencesView.Keys
@@ -19,7 +20,8 @@ case class UserPreferencesView(
         Keys.radius -> NumberUserPreferenceValue(radius),
         Keys.hideClosed -> BooleanUserPreferenceValue(hideClosed),
         Keys.hidePermanentClosed -> BooleanUserPreferenceValue(hidePermanentClosed),
-        Keys.lastPlace -> StringUserPreferenceValue(lastPlace.toString)
+        Keys.lastPlace -> StringUserPreferenceValue(lastPlace.toString),
+        Keys.placeType -> StringUserPreferenceValue(placeType.id)
       )
     )
   }
@@ -33,6 +35,7 @@ object UserPreferencesView {
     final val hideClosed = "site.hide_closed"
     final val hidePermanentClosed = "site.hide_permanent_closed"
     final val lastPlace = "site.last_place"
+    final val placeType = "site.place_type"
   }
 
   val default = UserPreferencesView(
@@ -40,7 +43,8 @@ object UserPreferencesView {
     radius = 500,
     hideClosed = false,
     hidePermanentClosed = false,
-    lastPlace = HeaderNav.NearbyPlaces
+    lastPlace = HeaderNav.NearbyPlaces,
+    placeType = PlaceTypes.Restaurant
   )
 
   def apply(prefs: UserPreferences): UserPreferencesView =
@@ -52,7 +56,8 @@ object UserPreferencesView {
       radius = prefs.getInt(Keys.radius),
       hideClosed = prefs.getBoolean(Keys.hideClosed),
       hidePermanentClosed = prefs.getBoolean(Keys.hidePermanentClosed),
-      lastPlace = HeaderNav(prefs.getString(Keys.lastPlace))
+      lastPlace = HeaderNav(prefs.getString(Keys.lastPlace)),
+      placeType = PlaceTypes.byId(prefs.getString(Keys.placeType)).getOrElse(PlaceTypes.Restaurant)
     )
 
   def unapply(prefs: UserPreferencesView): UserPreferences = prefs.toDomainModel
