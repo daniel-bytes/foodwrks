@@ -25,11 +25,18 @@ trait PlacesSearchRepository extends Repository {
     radius: Int,
     placeType: PlaceType
   ): AsyncResult[Seq[Place]]
+
+  def searchPlaces(
+    location: GeoLocation,
+    radius: Int,
+    query: String
+  ): AsyncResult[Seq[Place]]
 }
 
 object PlacesSearchRepository {
   private val detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json"
-  private val searchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+  private val nearbySearchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+  private val searchUrl = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
 
   case class GooglePlacesConfig(apiKey: String)
 
@@ -81,7 +88,7 @@ object PlacesSearchRepository {
       placeType: PlaceType
     ): AsyncResult[Seq[Place]] = {
       ws
-        .url(searchUrl)
+        .url(nearbySearchUrl)
         .withQueryStringParameters(
         "location" -> location.toString,
           "radius" -> toMeters(radius).toString,
@@ -91,9 +98,9 @@ object PlacesSearchRepository {
         .withRequestTimeout(10000.millis)
         .get()
         .map { r =>
-          logger.info(s"Google API [$detailsUrl?location=$location&radius=${toMeters(radius).toString}&type=$placeType] responded with [${r.status} ${r.statusText}]")
+          logger.info(s"Google API [$nearbySearchUrl?location=$location&radius=${toMeters(radius).toString}&type=$placeType] responded with [${r.status} ${r.statusText}]")
 
-          r.json.validate[SearchResults].fold({ err =>
+          r.json.validate[NearbySearchResults].fold({ err =>
             Left(Error.DeserializationError(
               err.flatMap {
                 case (k, values) => values.map(v => s"$k - ${v.message}")
@@ -103,6 +110,47 @@ object PlacesSearchRepository {
             Right(
               results
                 .results
+                .flatMap(fromResult)
+                .sortBy(_.operationalStatus.sortKey)
+              // TODO: sort by distance
+            )
+          })
+        }
+    }
+
+    def searchPlaces(
+      location: GeoLocation,
+      radius: Int,
+      query: String
+    ): AsyncResult[Seq[Place]] = {
+      val inputType = "textquery"
+      val locationBias = s"circle:${toMeters(radius)}@${location.lat},${location.lng}"
+      val fields = "place_id,business_status,photos,formatted_address,name,rating,opening_hours,geometry,user_ratings_total,types,reference,icon"
+      ws
+        .url(searchUrl)
+        .withQueryStringParameters(
+          "input" -> query,
+          "inputtype" -> inputType,
+          "locationbias" -> locationBias,
+          "fields" -> fields,
+          "key" -> config.apiKey
+        )
+        .withRequestTimeout(10000.millis)
+        .get()
+        .map { r =>
+          logger.info(s"Google API [$searchUrl?input=$query&inputtype=$inputType&fields=$fields&locationbias=$locationBias] responded with [${r.status} ${r.statusText}]")
+
+          r.json.validate[SearchResults].fold({ err =>
+            Left(Error.DeserializationError(
+              err.flatMap {
+                case (k, values) => values.map(v => s"$k - ${v.message}")
+              }.toSeq
+            ))
+          }, { results =>
+            logger.info(results.candidates.map(r => (r.placeId, r.name, r.geometry)).toString)
+            Right(
+              results
+                .candidates
                 .flatMap(fromResult)
                 .sortBy(_.operationalStatus.sortKey)
               // TODO: sort by distance
@@ -125,7 +173,7 @@ object PlacesSearchRepository {
               accountId = AccountId.empty,
               location = GeoLocation(geometry.location.lat, geometry.location.lng),
               name = name,
-              address = r.vicinity.getOrElse("unknown"),
+              address = r.formattedAddress.orElse(r.vicinity).getOrElse("unknown"),
               icon = r.icon.map(i => new URI(i)).getOrElse(new URI("https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png")),
               operationalStatus = r.businessStatus match {
                 case Some("OPERATIONAL") if r.openingHours.exists(_.openNow) => OperationalStatus.Open
@@ -165,11 +213,13 @@ object PlacesSearchRepository {
       reference: Option[String],
       types: Option[Seq[String]],
       userRatingsTotal: Option[Int],
-      vicinity: Option[String]
+      vicinity: Option[String],
+      formattedAddress: Option[String]
     )
 
     case class Details(result: Result)
-    case class SearchResults(results: Seq[Result])
+    case class NearbySearchResults(results: Seq[Result])
+    case class SearchResults(candidates: Seq[Result])
 
     implicit val config = JsonConfiguration(SnakeCase)
     implicit val locationReads = Json.reads[Location]
@@ -178,6 +228,7 @@ object PlacesSearchRepository {
     implicit val photoReads = Json.reads[Photo]
     implicit val resultReads = Json.reads[Result]
     implicit val detailsReads: Reads[Details] = Json.reads[Details]
+    implicit val nearbySearchResultsReads: Reads[NearbySearchResults] = Json.reads[NearbySearchResults]
     implicit val searchResultsReads: Reads[SearchResults] = Json.reads[SearchResults]
   }
 }

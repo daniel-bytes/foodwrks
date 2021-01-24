@@ -1,21 +1,20 @@
 @import helper._
 @import domain.models.PlaceType
 @(
-    site: Site[PlacesView],
-    placeTypes: List[PlaceType]
+    site: Site[PlacesView]
 )(
     implicit request: RequestHeader,
     messagesProvider: MessagesProvider
 )
 
-@main("What's Nearby?") {
+@main("Search") {
 @_header(Some(site.headerNav))
 <section data-require-location="true" class="section">
     <div class="container">
         <nav class="level">
             <div class="level-left">
                 <div class="level-item">
-                    <h2 class="title">What's Nearby?</h2>
+                    <h2 class="title">Search for a place</h2>
                 </div>
             </div>
             <div class="level-right">
@@ -32,17 +31,11 @@
                             </div>
                         </p>
                         <p class="control">
-                            <div class="select">
-                                <select id="place-type">
-                                    @for(placeType <- placeTypes) {
-                                    <option value="@placeType.id" @site.preferences.selectedIfPlaceTypeEquals(placeType)>@placeType.text</option>
-                                    }
-                                </select>
-                            </div>
+                            <input type="text" id="query" class="input">
                         </p>
                         <p class="control">
-                            <button id="search-nearby" class="button">
-                                Search Nearby
+                            <button id="search-text" class="button" disabled>
+                                Search
                             </button>
                         </p>
                     </div>
@@ -54,7 +47,7 @@
         <section class="section">
             <div class="container">
                 <h2 class="subtitle">
-                    No nearby places were found.  Try increasing your search distance.
+                    No places were found.  Try increasing your search distance or entering a different search query.
                 </h2>
             </div>
         </section>

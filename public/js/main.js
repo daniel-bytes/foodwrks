@@ -10,11 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
     url => document.location.href = url,
     error => alert(error)
   )
+  const search = new Search(
+    document,
+    navigator.geolocation
+  )
   const editors = new Editors(
     document,
     navigator.geolocation,
     msg => confirm(msg),
-    forms
+    forms,
+    search
   )
 
   bulma.bindAll()

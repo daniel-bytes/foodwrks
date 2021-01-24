@@ -17,6 +17,13 @@ trait PlacesService extends Service {
     placeType: PlaceType
   ): AsyncResult[Seq[Place]]
 
+  def searchPlaces(
+    userId: UserId,
+    location: GeoLocation,
+    radius: Int,
+    query: String
+  ): AsyncResult[Seq[Place]]
+
   def listPlacesForUser(
     userId: UserId,
     visitStatus: Option[VisitStatus] = None
@@ -60,6 +67,15 @@ object PlacesService {
 
         results = nearby.filterNot(place => externalIds.contains(place.externalId))
       } yield results).value
+    }
+
+    def searchPlaces(
+      userId: UserId,
+      location: GeoLocation,
+      radius: Int,
+      query: String
+    ): AsyncResult[Seq[Place]] = {
+      searchRepository.searchPlaces(location, radius, query)
     }
 
     def listPlacesForUser(

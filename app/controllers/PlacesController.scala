@@ -110,7 +110,7 @@ class PlacesController @Inject()(
       val userPrefsView = UserPreferencesView(user.preferences)
       val searchLocation = request.getQueryString("location").flatMap(GeoLocation.parse).getOrElse(userPrefsView.location)
       val searchRadius = request.getQueryString("radius").flatMap(_.toIntOption).getOrElse(userPrefsView.radius)
-      val placeType = request.getQueryString("place_type").flatMap(PlaceTypes.byId).getOrElse(PlaceTypes.Restaurant)
+      val placeType = request.getQueryString("place_type").flatMap(PlaceTypes.byId).getOrElse(userPrefsView.placeType)
 
       val headerNav = HeaderNav.NearbyPlaces
       val updatedPrefs = userPrefsView
@@ -155,8 +155,58 @@ class PlacesController @Inject()(
   def search() = Action.async { implicit request: MessagesRequest[AnyContent] =>
     silhouette.secureMessagesRequest { user =>
       logger.info(s"[${user.id}] GET /places/search")
-      //_ <- updateUserHeaderNavPreferences(user, Some(HeaderNav.PlacesSearch)).toMvcResultEitherT
-      Future.successful(Redirect(routes.PlacesController.nearby()))
+
+      val headerNav = HeaderNav.PlacesSearch
+      val userPrefsView = UserPreferencesView(user.preferences)
+      val maybeQuery = request.getQueryString("query").map(_.trim).filter(_.nonEmpty)
+
+      maybeQuery match {
+        case None =>
+          Future.successful(
+            Ok(
+              views.html.search_places(
+                Site(userPrefsView, PlacesView(Seq.empty))
+              )
+            )
+          )
+        case Some(query) =>
+          logger.info(s"search query [$query]")
+          val searchLocation = request.getQueryString("location").flatMap(GeoLocation.parse).getOrElse(userPrefsView.location)
+          val searchRadius = request.getQueryString("radius").flatMap(_.toIntOption).getOrElse(userPrefsView.radius)
+
+          val updatedPrefs = userPrefsView
+            .modify(_.location)
+            .setTo(searchLocation)
+            .modify(_.radius)
+            .setTo(searchRadius)
+            .modify(_.lastPlace)
+            .setTo(headerNav)
+
+          val updatedUser = user
+            .modify(_.preferences)
+            .setTo(updatedPrefs.toDomainModel)
+
+          (for {
+            places <- placesService.searchPlaces(
+              user.id,
+              searchLocation,
+              searchRadius,
+              query
+            ).toMvcResultEitherT
+
+            view = mapPlacesView(places)
+
+            _ <- if (user != updatedUser) {
+              usersService.saveUser(updatedUser).toMvcResultEitherT
+            } else {
+              Future.successful(Right(updatedUser)).toMvcResultEitherT
+            }
+
+            model = Site(updatedPrefs, view)
+
+            result = Ok(views.html.search_places(model))
+          } yield result).value.fold
+      }
     }
   }
 

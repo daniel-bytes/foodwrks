@@ -3,6 +3,7 @@
 @headerNavActiveClass(nav: String) = @{
     maybeNav match {
         case Some(HeaderNav.NearbyPlaces) if nav == "nearby" => "is-active"
+        case Some(HeaderNav.PlacesSearch) if nav == "search" => "is-active"
         case Some(HeaderNav.SavedPlaces) | Some(HeaderNav.SavedPlace(_)) if nav == "saved" => "is-active"
         case Some(HeaderNav.VisitedPlaces) | Some(HeaderNav.VisitedPlace(_)) if nav == "visited" => "is-active"
         case _ => ""
@@ -29,6 +30,10 @@
         <div class="navbar-start">
             <a class="navbar-item @headerNavActiveClass("nearby")" href="/places/nearby">
                 What's Nearby?
+            </a>
+
+            <a class="navbar-item @headerNavActiveClass("search")" href="/places/search">
+            Search
             </a>
 
             <a class="navbar-item @headerNavActiveClass("saved")" href="/places/saved">

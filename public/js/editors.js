@@ -4,17 +4,18 @@
  * actions to the backend server.
  */
 class Editors {
-  constructor(document, geolocation, confirm, forms) {
+  constructor(document, geolocation, confirm, forms, search) {
     this.document = document
     this.geolocation = geolocation
     this.confirm = confirm
     this.forms = forms
+    this.search = search
   }
 
   bindAll() {
     this.bindDeleteCommentButtons()
     this.bindSavePlaceButtons()
-    this.bindLocationSearch()
+    this.bindSearch()
     this.bindEditors()
   }
 
@@ -37,36 +38,35 @@ class Editors {
     )
   }
 
-  bindLocationSearch() {
-    const $searchButton = this.document.querySelector('button#search-nearby')
-    if ($searchButton) {
-      if (this.geolocation) {
+  bindSearch() {
+    const $document = this.document
+    const $search = this.search
+
+    function bind(selector, action, disableFor) {
+      const $searchButton = $document.querySelector(selector)
+
+      if ($searchButton) {
         $searchButton.addEventListener('click', event => {
-          $searchButton.classList.add('is-loading')
-
-          this.geolocation.getCurrentPosition(
-            position => {
-              $searchButton.classList.remove('is-loading')
-              const location = `${position.coords.latitude},${position.coords.longitude}`
-              const searchRadius = this.document.getElementById('search-radius').value
-              const placeType = this.document.getElementById('place-type').value
-              this.document.location.href = `/places/nearby?location=${location}&radius=${searchRadius}&place_type=${placeType}`
-            }, error => {
-              $searchButton.classList.remove('is-loading')
-              console.error(error)
-
-              if (error.code === 1) alert('Failed to get browser location: permission denied')
-              else if (error.code === 2) alert('Failed to get browser location: position unavailable, try again')
-              else if (error.code === 3) alert('Failed to get browser location: timed out, try again')
-              else alert(`Failed to get browser location (error code ${error.code})`)
-            }
+          $search[action](
+            () => $searchButton.classList.add('is-loading'),
+            () => $searchButton.classList.remove('is-loading')
           )
         })
-      } else {
-        $searchButton.disabled = true
-        $searchButton.textContent = "Location search disabled"
+
+        if (disableFor) {
+          const $editor = $document.querySelector(disableFor)
+
+          if ($editor) {
+            $editor.addEventListener('keyup', () => {
+              $searchButton.disabled = !$editor.value.trim()
+            })
+          }
+        }
       }
     }
+
+    bind('button#search-nearby', 'searchNearby')
+    bind('button#search-text', 'searchText', 'input#query')
   }
 
   bindEditors() {

@@ -25,6 +25,22 @@ case class UserPreferencesView(
       )
     )
   }
+
+  def selectedIfRadiusBetween(min: Int, max: Int): String = {
+    if (this.radius >= min && this.radius <= max) {
+      "selected"
+    } else {
+      ""
+    }
+  }
+
+  def selectedIfPlaceTypeEquals(placeType: PlaceType): String = {
+    if (this.placeType == placeType) {
+      "selected"
+    } else {
+      ""
+    }
+  }
 }
 
 object UserPreferencesView {
