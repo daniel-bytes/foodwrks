@@ -1,5 +1,8 @@
 /**
- * Bulma interactivity
+ * Bulma interactivity.
+ * Mainly just scripts from the Bulma website to make things like notification
+ * popups interactive, as Bulma does not ship with bundled native Javascript.
+ *
  */
 class Bulma {
   constructor(document) {

@@ -1,4 +1,9 @@
-class Api {
+/**
+ * Dynamic forms manager class.
+ * Uses the browser `fetch` API for calling forms,
+ * redirecting to whatever URL the response contains.
+ */
+class Forms {
   constructor(redirect, showError) {
     this.redirect = redirect
     this.showError = showError

@@ -1,9 +1,14 @@
+/**
+ * Manages wiring up editor forms and buttons in the application
+ * via data attributes, delegating to the Forms class for issuing
+ * actions to the backend server.
+ */
 class Editors {
-  constructor(document, geolocation, confirm, api) {
+  constructor(document, geolocation, confirm, forms) {
     this.document = document
     this.geolocation = geolocation
     this.confirm = confirm
-    this.api = api
+    this.forms = forms
   }
 
   bindAll() {
@@ -15,7 +20,7 @@ class Editors {
 
   bindDeleteCommentButtons() {
     this.bindActionButtons('button[data-action="delete-comment"]', dataset =>
-      this.api.deleteComment(
+      this.forms.deleteComment(
         dataset.placeid,
         dataset.commentid
       )
@@ -24,7 +29,7 @@ class Editors {
 
   bindSavePlaceButtons() {
     this.bindActionButtons('button[data-action="save-place"]', dataset =>
-      this.api.savePlace(
+      this.forms.savePlace(
         dataset.placeid,
         dataset.externalid,
         dataset.visitstatus
