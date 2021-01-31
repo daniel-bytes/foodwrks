@@ -30,14 +30,15 @@ trait PlacesSearchRepository extends Repository {
   def searchPlaces(
     location: GeoLocation,
     radius: Int,
-    query: String
+    query: String,
+    pageCursor: Option[PageCursor]
   ): AsyncResult[CursorPagedSeq[Place]]
 }
 
 object PlacesSearchRepository {
   private val detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json"
   private val nearbySearchUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-  private val searchUrl = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+  private val searchUrl = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 
   case class GooglePlacesConfig(apiKey: String)
 
@@ -48,6 +49,8 @@ object PlacesSearchRepository {
     ws: WSClient
   )(implicit ec: ExecutionContext) extends PlacesSearchRepository {
     import GooglePlaces._
+
+    private val keyParams = Map("key" -> config.apiKey)
 
     def getDetails(
       placeId: ExternalPlaceId
@@ -89,33 +92,47 @@ object PlacesSearchRepository {
       placeType: PlaceType,
       pageCursor: Option[PageCursor]
     ): AsyncResult[CursorPagedSeq[Place]] = {
-      pageCursor
-        .map(cursor =>
-          ws
-            .url(nearbySearchUrl)
-            .withQueryStringParameters(
-              "key" -> config.apiKey,
-              "pagetoken" -> cursor.value
-            )
-        ).getOrElse(
-          ws
-            .url(nearbySearchUrl)
-            .withQueryStringParameters(
-              "location" -> location.toString,
-              "radius" -> toMeters(radius).toString,
-              "type" -> placeType.id,
-              "key" -> config.apiKey
-            )
-        )
+      val params = Map(
+        "location" -> location.toString,
+        "radius" -> toMeters(radius).toString,
+        "type" -> placeType.id
+      )
+      search(nearbySearchUrl, params, pageCursor)
+    }
+
+    def searchPlaces(
+      location: GeoLocation,
+      radius: Int,
+      query: String,
+      pageCursor: Option[PageCursor]
+    ): AsyncResult[CursorPagedSeq[Place]] = {
+      val params = Map(
+        "location" -> location.toString,
+        "radius" -> toMeters(radius).toString,
+        "query" -> query
+      )
+      search(searchUrl, params, pageCursor)
+    }
+
+    private def search(
+      url: String,
+      params: Map[String, String],
+      maybePageCursor: Option[PageCursor]
+    ): AsyncResult[CursorPagedSeq[Place]] = {
+      val paramsWithKey = maybePageCursor match {
+        case Some(cursor) => Map("pagetoken" -> cursor.value) ++ keyParams
+        case None => params ++ keyParams
+      }
+
+      ws
+        .url(url)
+        .withQueryStringParameters(paramsWithKey.toSeq: _*)
         .withRequestTimeout(10000.millis)
         .get()
         .map { r =>
-          val q = pageCursor
-            .map(c => s"pagetoken=${c.value}")
-            .getOrElse(s"location=$location&radius=${toMeters(radius).toString}&type=$placeType")
-          logger.info(s"Google API [$nearbySearchUrl?$q] responded with [${r.status} ${r.statusText}]")
+          logger.info(s"Google API [$url] responded with [${r.status} ${r.statusText}]")
 
-          r.json.validate[NearbySearchResults].fold({ err =>
+          r.json.validate[SearchResults].fold({ err =>
             Left(Error.DeserializationError(
               err.flatMap {
                 case (k, values) => values.map(v => s"$k - ${v.message}")
@@ -128,48 +145,6 @@ object PlacesSearchRepository {
                   .results
                   .flatMap(fromResult),
                 cursor = results.nextPageToken.map(PageCursor)
-              )
-            )
-          })
-        }
-    }
-
-    def searchPlaces(
-      location: GeoLocation,
-      radius: Int,
-      query: String
-    ): AsyncResult[CursorPagedSeq[Place]] = {
-      val inputType = "textquery"
-      val locationBias = s"circle:${toMeters(radius)}@${location.lat},${location.lng}"
-      val fields = "place_id,business_status,photos,formatted_address,name,rating,opening_hours,geometry,user_ratings_total,types,reference,icon"
-      ws
-        .url(searchUrl)
-        .withQueryStringParameters(
-          "input" -> query,
-          "inputtype" -> inputType,
-          "locationbias" -> locationBias,
-          "fields" -> fields,
-          "key" -> config.apiKey
-        )
-        .withRequestTimeout(10000.millis)
-        .get()
-        .map { r =>
-          logger.info(s"Google API [$searchUrl?input=$query&inputtype=$inputType&fields=$fields&locationbias=$locationBias] responded with [${r.status} ${r.statusText}]")
-
-          r.json.validate[SearchResults].fold({ err =>
-            Left(Error.DeserializationError(
-              err.flatMap {
-                case (k, values) => values.map(v => s"$k - ${v.message}")
-              }.toSeq
-            ))
-          }, { results =>
-            logger.info(results.candidates.map(r => (r.placeId, r.name, r.geometry)).toString)
-            Right(
-              CursorPagedSeq(
-                results
-                  .candidates
-                  .flatMap(fromResult),
-                cursor = None
               )
             )
           })
@@ -235,8 +210,7 @@ object PlacesSearchRepository {
     )
 
     case class Details(result: Result)
-    case class SearchResults(candidates: Seq[Result])
-    case class NearbySearchResults(
+    case class SearchResults(
       results: Seq[Result],
       nextPageToken: Option[String]
     )
@@ -248,7 +222,6 @@ object PlacesSearchRepository {
     implicit val photoReads = Json.reads[Photo]
     implicit val resultReads = Json.reads[Result]
     implicit val detailsReads: Reads[Details] = Json.reads[Details]
-    implicit val nearbySearchResultsReads: Reads[NearbySearchResults] = Json.reads[NearbySearchResults]
     implicit val searchResultsReads: Reads[SearchResults] = Json.reads[SearchResults]
   }
 }

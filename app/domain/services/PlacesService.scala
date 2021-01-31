@@ -22,7 +22,8 @@ trait PlacesService extends Service {
     userId: UserId,
     location: GeoLocation,
     radius: Int,
-    query: String
+    query: String,
+    pageCursor: Option[PageCursor]
   ): AsyncResult[CursorPagedSeq[Place]]
 
   def listPlacesForUser(
@@ -73,10 +74,11 @@ object PlacesService {
       userId: UserId,
       location: GeoLocation,
       radius: Int,
-      query: String
+      query: String,
+      pageCursor: Option[PageCursor]
     ): AsyncResult[CursorPagedSeq[Place]] = {
       (for {
-        nearby <- searchRepository.searchPlaces(location, radius, query).toEitherT
+        nearby <- searchRepository.searchPlaces(location, radius, query, pageCursor).toEitherT
 
         saved <- placesRepository.listPlacesForUser(userId).toEitherT
 

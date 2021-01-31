@@ -161,6 +161,7 @@ class PlacesController @Inject()(
       val headerNav = HeaderNav.PlacesSearch
       val userPrefsView = UserPreferencesView(user.preferences)
       val maybeQuery = request.getQueryString("query").map(_.trim).filter(_.nonEmpty)
+      val pageCursor = request.getQueryString("page_cursor").map(PageCursor)
 
       maybeQuery match {
         case None =>
@@ -194,7 +195,8 @@ class PlacesController @Inject()(
               user.id,
               searchLocation,
               searchRadius,
-              query
+              query,
+              pageCursor
             ).toMvcResultEitherT
 
             view = mapPlacesView(places)

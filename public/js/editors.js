@@ -82,12 +82,13 @@ class Editors {
     bind({
       selector: 'button#search-nearby',
       action: 'searchNearby',
-      pageButton: 'button#search-nearby-next-page'
+      pageButton: 'button#next-page'
     })
     bind({
       selector: 'button#search-text',
       action: 'searchText',
-      disableFor: 'input#query'
+      disableFor: 'input#query',
+      pageButton: 'button#next-page'
     })
   }
 
