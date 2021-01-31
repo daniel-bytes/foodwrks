@@ -39,3 +39,17 @@
     </div>
 </article>
 }
+
+@model.pageCursor.map { cursor =>
+<article class="media">
+    <div class="media-content">
+        <nav class="level">
+            <div class="level-item has-text-centered">
+                <button id="search-nearby-next-page" class="button" data-pagecursor="@cursor">
+                    Show more results
+                </button>
+            </div>
+        </nav>
+    </div>
+</article>
+}

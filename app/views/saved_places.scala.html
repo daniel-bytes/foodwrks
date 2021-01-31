@@ -21,17 +21,18 @@
     <h1 class="title">
       @title
     </h1>
-    @if(site.model.places.isEmpty) {
+
     <section class="section">
       <div class="container">
+        @if(site.model.places.isEmpty) {
         <h2 class="subtitle">
           Looks like you don't have any @visitStatus.text places
         </h2>
+        } else {
+        @_places_list(site.model)
+        }
       </div>
     </section>
-    }
-
-    @_places_list(site.model)
   </div>
 </section>
 }

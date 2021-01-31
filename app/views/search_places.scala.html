@@ -22,7 +22,7 @@
                 <div class="level-item">
                     <div class="field has-addons">
                         <p class="control">
-                            <div class="select">
+                            <div class="select is-small">
                                 <select id="search-radius">
                                     <option value="100" @site.preferences.selectedIfRadiusBetween(0, 100)>100 feet</option>
                                     <option value="500" @site.preferences.selectedIfRadiusBetween(101, 500)>500 feet</option>
@@ -32,10 +32,10 @@
                             </div>
                         </p>
                         <p class="control">
-                            <input type="text" id="query" class="input" value="@query">
+                            <input type="text" id="query" class="input is-small" value="@query">
                         </p>
                         <p class="control">
-                            <button id="search-text" class="button">
+                            <button id="search-text" class="button is-small">
                                 Search
                             </button>
                         </p>
@@ -44,17 +44,18 @@
             </div>
         </nav>
 
-        @if(site.model.places.isEmpty) {
+
         <section class="section">
             <div class="container">
+                @if(site.model.places.isEmpty) {
                 <h2 class="subtitle">
                     No places were found.  Try increasing your search distance or entering a different search query.
                 </h2>
+                } else {
+                @_places_list(site.model)
+                }
             </div>
         </section>
-        }
-
-        @_places_list(site.model)
     </div>
 </section>
 }

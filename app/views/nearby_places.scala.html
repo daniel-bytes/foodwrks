@@ -22,7 +22,7 @@
                 <div class="level-item">
                     <div class="field has-addons">
                         <p class="control">
-                            <div class="select">
+                            <div class="select is-small">
                                 <select id="search-radius">
                                     <option value="100" @site.preferences.selectedIfRadiusBetween(0, 100)>100 feet</option>
                                     <option value="500" @site.preferences.selectedIfRadiusBetween(101, 500)>500 feet</option>
@@ -32,7 +32,7 @@
                             </div>
                         </p>
                         <p class="control">
-                            <div class="select">
+                            <div class="select is-small">
                                 <select id="place-type">
                                     @for(placeType <- placeTypes) {
                                     <option value="@placeType.id" @site.preferences.selectedIfPlaceTypeEquals(placeType)>@placeType.text</option>
@@ -41,33 +41,26 @@
                             </div>
                         </p>
                         <p class="control">
-                            <button id="search-nearby" class="button">
+                            <button id="search-nearby" class="button is-small">
                                 Search
                             </button>
                         </p>
-                        @site.model.pageCursor.map { cursor =>
-                        <p class="control">
-                            <button id="search-nearby-next-page" class="button" data-pagecursor="@cursor">
-                                Show more results
-                            </button>
-                        </p>
-                        }
                     </div>
                 </div>
             </div>
         </nav>
 
-        @if(site.model.places.isEmpty) {
         <section class="section">
             <div class="container">
+        @if(site.model.places.isEmpty) {
                 <h2 class="subtitle">
                     No nearby places were found.  Try increasing your search distance.
                 </h2>
+        } else {
+                @_places_list(site.model)
+        }
             </div>
         </section>
-        }
-
-        @_places_list(site.model)
     </div>
 </section>
 }
